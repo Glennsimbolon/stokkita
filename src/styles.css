@@ -1,0 +1,294 @@
+/* ============================================
+   FILE: styles.css
+   FUNGSI: Style semua komponen
+   ============================================ */
+
+/* ---------- LAYOUT UTAMA ---------- */
+.app { display: flex; min-height: 100vh; }
+.main { flex: 1; min-width: 0; }
+.wrap {
+  padding: 28px;
+  max-width: 1240px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- SIDEBAR ---------- */
+.side {
+  width: 240px;
+  flex: none;
+  background: var(--side);
+  color: #CFE3E1;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 4px 8px 18px;
+}
+.logo b {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--mint);
+}
+.grp {
+  font-size: 12px;
+  color: #8FB1AE;
+  padding: 14px 10px 6px;
+}
+.nav {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  color: #CFE3E1;
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.nav:hover { background: #17393A; }
+.nav.on { background: var(--mint); color: #08302C; font-weight: 600; }
+
+/* ---------- TOPBAR ---------- */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.top input[type=search] {
+  flex: 1;
+  min-width: 180px;
+  max-width: 460px;
+}
+.av {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #CCFBF1;
+  color: #0F4F49;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+/* ---------- FORM ---------- */
+input, select {
+  height: 44px;
+  border: 1px solid #D5DCE4;
+  border-radius: var(--r-md);
+  padding: 0 12px;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+label.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ---------- TOMBOL ---------- */
+.btn {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-md);
+  border: 1px solid #D5DCE4;
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:hover { background: #F8FAFC; }
+.btn-pri { background: var(--acc); border-color: var(--acc); color: #fff; }
+.btn-pri:hover { background: #0D6560; }
+.btn-sm { height: 36px; padding: 0 12px; font-size: 13px; }
+
+/* ---------- KARTU ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+}
+.card.ai {
+  background: var(--side);
+  color: #E6F4F2;
+  border: 0;
+}
+.card.ai .h2 { color: #fff; }
+.card.ai p { color: #CFE3E1; line-height: 1.5; }
+.kpi { flex: 1; min-width: 200px; }
+.kpi .l { color: var(--mut); font-size: 13px; }
+.kpi .v { font-size: 28px; font-weight: 700; margin-top: 6px; }
+.kpi .d { font-size: 12px; margin-top: 6px; color: #166534; }
+.kpi .d.r { color: #991B1B; }
+
+/* ---------- TIPOGRAFI HALAMAN ---------- */
+h1 { font-size: 24px; font-weight: 700; }
+.sub { color: var(--mut); margin-top: 4px; }
+.h2 { font-weight: 700; font-size: 16px; margin-bottom: 14px; }
+
+/* ---------- UTILITAS ---------- */
+.row { display: flex; gap: 16px; flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------- BADGE ---------- */
+.bd {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bd.ok { background: #DCFCE7; color: #166534; }
+.bd.wr { background: #FEF3C7; color: #92400E; }
+.bd.er { background: #FEE2E2; color: #991B1B; }
+.bd.if { background: #E0F2FE; color: #075985; }
+
+/* ---------- TAB ---------- */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 1px solid #D5DCE4;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  color: var(--ink);
+}
+.tab[aria-pressed="true"] {
+  background: var(--side);
+  color: #fff;
+  border-color: var(--side);
+}
+
+/* ---------- TABEL ---------- */
+.tw { overflow-x: auto; }
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.tbl th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--mut);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.tbl td {
+  padding: 12px;
+  border-bottom: 1px solid #EEF1F5;
+}
+
+/* ---------- LIST ITEM ---------- */
+.li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #EEF1F5;
+}
+.li:last-child { border-bottom: 0; }
+.li small { color: var(--mut); display: block; margin-top: 2px; }
+
+/* ---------- KANBAN ---------- */
+.col {
+  flex: 1;
+  min-width: 230px;
+  background: #EBEFF3;
+  border-radius: var(--r-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.col h3 {
+  margin: 2px 4px 4px;
+  font-size: 13px;
+  color: var(--mut);
+  font-weight: 600;
+}
+.po {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+.po small { color: var(--mut); }
+.po .f {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- MODAL ---------- */
+.dialog {
+  border: 0;
+  border-radius: var(--r-xl);
+  padding: 24px;
+  width: min(440px, 92vw);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, .3);
+}
+.dialog::backdrop { background: rgba(15, 23, 42, .5); }
+
+/* ---------- TOAST ---------- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--r-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 20;
+}
+.toast.show { opacity: 1; }
+
+/* ---------- RESPONSIVE ---------- */
+.menu { display: none; }
+@media (max-width: 900px) {
+  .side {
+    position: fixed;
+    left: -260px;
+    z-index: 30;
+    transition: left .2s;
+  }
+  .side.open { left: 0; }
+  .menu { display: inline-block; }
+  .wrap, .top { padding: 16px; }
+}

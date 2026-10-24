@@ -1,0 +1,53 @@
+/* ============================================
+   FILE: index.css
+   FUNGSI: Design token + reset global
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* ---------- DESIGN TOKEN ---------- */
+/* Ubah 1 baris di sini = seluruh app berubah */
+:root {
+  --bg:    #F4F6F8;
+  --ink:   #0F172A;
+  --mut:   #5B6475;
+  --line:  #E3E8EE;
+  --side:  #0F2A2B;
+  --acc:   #0F766E;
+  --mint:  #2DD4BF;
+  --card:  #FFFFFF;
+
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+}
+
+/* ---------- RESET ---------- */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+h1, h2, h3, p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+/* ---------- AKSESIBILITAS ---------- */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #99F6E4;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
