@@ -11,10 +11,18 @@ import Dashboard     from './pages/Dashboard';
 import Stock         from './pages/Stock';
 import PurchaseOrder from './pages/PurchaseOrder';
 
-// Batch 3 — aktif sekarang
+// Batch 3
 import SalesOrder from './pages/SalesOrder';
 import Transfer   from './pages/Transfer';
 import Opname     from './pages/Opname';
+
+// Batch 4 — Lengkap!
+import Suppliers    from './pages/Suppliers';
+import Warehouses   from './pages/Warehouses';
+import Users        from './pages/Users';
+import Reports      from './pages/Reports';
+import Forecast     from './pages/Forecast';
+import Integrations from './pages/Integrations';
 
 const PAGES = {
   dash: Dashboard,
@@ -23,33 +31,21 @@ const PAGES = {
   so:       SalesOrder,
   transfer: Transfer,
   opname:   Opname,
+  suppliers:    Suppliers,
+  warehouses:   Warehouses,
+  users:        Users,
+  reports:      Reports,
+  forecast:     Forecast,
+  integrations: Integrations,
 };
-
-function ComingSoon({ page }) {
-  return (
-    <>
-      <div>
-        <h1>Segera Hadir</h1>
-        <div className="sub">
-          Halaman <b>"{page}"</b> akan dibuat di batch berikutnya.
-        </div>
-      </div>
-      <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🚧</div>
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>Dalam Pengerjaan</div>
-        <div className="sub">Akan tersedia di Batch 4.</div>
-      </div>
-    </>
-  );
-}
 
 export default function App() {
   const { page } = useApp();
-  const Current = PAGES[page];
+  const Current = PAGES[page] || Dashboard;
 
   return (
     <Layout>
-      {Current ? <Current /> : <ComingSoon page={page} />}
+      <Current />
     </Layout>
   );
 }

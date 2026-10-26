@@ -6,13 +6,16 @@
 import {
   createContext, useContext, useState, useEffect, useMemo,
 } from 'react';
-import { itemsApi }     from '../api/items';
-import { posApi }       from '../api/pos';
-import { soApi }        from '../api/so';
-import { transfersApi } from '../api/transfers';
-import { opnamesApi }   from '../api/opnames';
-import { PO_COLUMNS }   from '../data/constants';
-import { useToast }     from '../hooks/useToast';
+import { itemsApi }      from '../api/items';
+import { posApi }        from '../api/pos';
+import { soApi }         from '../api/so';
+import { transfersApi }  from '../api/transfers';
+import { opnamesApi }    from '../api/opnames';
+import { suppliersApi }  from '../api/suppliers';
+import { warehousesApi } from '../api/warehouses';
+import { usersApi }      from '../api/users';
+import { PO_COLUMNS }    from '../data/constants';
+import { useToast }      from '../hooks/useToast';
 
 const Ctx = createContext(null);
 
@@ -53,13 +56,16 @@ function nextOpnameCode(existing) {
 
 export function AppProvider({ children }) {
   // ---------- DATA ----------
-  const [items, setItems]         = useState([]);
-  const [pos, setPos]             = useState([]);
-  const [so, setSo]               = useState([]);
-  const [transfers, setTransfers] = useState([]);
-  const [opnames, setOpnames]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [items, setItems]           = useState([]);
+  const [pos, setPos]               = useState([]);
+  const [so, setSo]                 = useState([]);
+  const [transfers, setTransfers]   = useState([]);
+  const [opnames, setOpnames]       = useState([]);
+  const [suppliers, setSuppliers]   = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
   // ---------- UI ----------
   const [page, setPage]               = useState('dash');
@@ -76,12 +82,18 @@ export function AppProvider({ children }) {
 
     async function load() {
       try {
-        const [itemsData, posData, soData, trData, opData] = await Promise.all([
+        const [
+          itemsData, posData, soData, trData, opData,
+          supData, whData, userData,
+        ] = await Promise.all([
           itemsApi.list(),
           posApi.list(),
           soApi.list(),
           transfersApi.list(),
           opnamesApi.list(),
+          suppliersApi.list(),
+          warehousesApi.list(),
+          usersApi.list(),
         ]);
         if (!cancelled) {
           setItems(itemsData);
@@ -89,6 +101,9 @@ export function AppProvider({ children }) {
           setSo(soData);
           setTransfers(trData);
           setOpnames(opData);
+          setSuppliers(supData);
+          setWarehouses(whData);
+          setUsers(userData);
         }
       } catch (err) {
         if (!cancelled) setError(err);
@@ -227,7 +242,7 @@ export function AppProvider({ children }) {
       setTransfers((prev) => prev.map((t) => (t.kode === kode ? updated : t)));
       toast(`${kode} → ${status}`);
 
-      // Kalau status = 'diterima', kurangi stok di gudang asal, tambah di tujuan
+      // Kalau status = 'diterima', kurangi stok di gudang asal
       if (status === 'diterima') {
         const t = transfers.find((x) => x.kode === kode);
         if (t) {
@@ -276,6 +291,7 @@ export function AppProvider({ children }) {
     () => ({
       // data
       items, pos, so, transfers, opnames,
+      suppliers, warehouses, users,
       loading, error,
       // items
       addItem, updateItemStock, removeItem,
@@ -297,6 +313,7 @@ export function AppProvider({ children }) {
     }),
     [
       items, pos, so, transfers, opnames,
+      suppliers, warehouses, users,
       loading, error,
       page, tab, gudang, query, sidebarOpen,
       message, visible,
