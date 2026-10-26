@@ -1,16 +1,48 @@
-# React + Vite
+# 📦 StokKita — Modern Inventory Management
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+StokKita adalah aplikasi manajemen inventori (stok) berbasis web yang dirancang untuk membantu UMKM, toko retail, dan distributor mengelola gudang mereka secara modern, cepat, dan akurat.
 
-Currently, two official plugins are available:
+Aplikasi ini dibangun menggunakan **React (Vite)** untuk frontend dan **Supabase (PostgreSQL)** untuk backend & database secara *real-time*.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🔗 Live Demo
+Kamu bisa mencoba aplikasi secara langsung di:
+**[https://stokkita-pi.vercel.app](https://stokkita-pi.vercel.app)**
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Fitur Utama
 
-## Expanding the Oxlint configuration
+Aplikasi ini memiliki 12 modul lengkap yang siap digunakan:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. **Sistem Autentikasi (Auth)** — Login & Register aman menggunakan Supabase Auth. Halaman dilindungi (Protected Routes).
+2. **Dasbor Interaktif** — Ringkasan nilai aset, SKU aktif, stok menipis, dan Purchase Order (PO) yang sedang berjalan.
+3. **Stok Produk** — Tabel inventori lengkap dengan filter gudang, filter status (Menipis/ED), dan fitur penerimaan barang.
+4. **Pembelian (PO)** — Buat PO baru dengan detail multi-barang. Stok otomatis **bertambah** saat status PO berubah menjadi "Selesai".
+5. **Penjualan (SO)** — Buat pesanan pelanggan dengan validasi stok. Stok otomatis **berkurang** saat pesanan selesai.
+6. **Transfer Gudang** — Pindahkan stok antar gudang. Stok gudang asal berkurang, gudang tujuan bertambah.
+7. **Stock Opname** — Koreksi stok sistem dengan hasil hitung fisik. Riwayat opname tersimpan permanen.
+8. **Prediksi & Reorder** — Analisis AI sederhana untuk memprediksi kapan barang akan habis.
+9. **Laporan (Reports)** — Laporan nilai persediaan yang bisa di-export ke **CSV** dan **PDF** (siap cetak).
+10. **Gudang & Lokasi** — Pantau kapasitas dan distribusi nilai per gudang.
+11. **Pemasok (Suppliers)** — CRUD lengkap pemasok beserta status Aktif/Nonaktif.
+12. **Pengguna & Akses** — Manajemen pengguna sistem dengan role (Admin, Staff, Viewer).
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+- **Frontend:** React 18, Vite, Vanilla CSS (Zero CSS Framework untuk performa maksimal)
+- **Backend & Database:** Supabase (PostgreSQL), Row Level Security (RLS)
+- **Library Tambahan:** `clsx` (classnames), `jspdf` & `jspdf-autotable` (Export PDF)
+- **Deployment:** Vercel
+
+---
+
+## 🚀 Cara Menjalankan di Lokal
+
+Jika kamu ingin menjalankan project ini di komputer sendiri, ikuti langkah berikut:
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/Glennsimbolon/stokkita.git
+cd stokkita
