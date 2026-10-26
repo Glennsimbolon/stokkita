@@ -257,7 +257,9 @@ h1 { font-size: 24px; font-weight: 700; }
   border: 0;
   border-radius: var(--r-xl);
   padding: 24px;
-  width: min(440px, 92vw);
+  width: min(600px, 92vw); /* Diperlebar dari 440px ke 600px */
+  max-height: 90vh; /* Agar tidak kepanjangan di layar kecil */
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(15, 23, 42, .3);
 }
 .dialog::backdrop { background: rgba(15, 23, 42, .5); }

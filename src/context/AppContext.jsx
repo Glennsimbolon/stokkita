@@ -159,10 +159,49 @@ export function AppProvider({ children }) {
   };
 
   // ---------- PO ----------
+  const createPo = async (supplier, details) => {
+    // Hitung total amount dari detail
+    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
+    
+    const newPo = {
+      kode: nextPoCode(pos),
+      supplier,
+      amount: totalAmount,
+      kolom: 0,
+    };
+
+    try {
+      const created = await posApi.create(newPo, details);
+      setPos((prev) => [created, ...prev]);
+      toast('PO berhasil dibuat');
+      return created;
+    } catch (err) {
+      toast(`Gagal buat PO: ${err.message}`);
+      throw err;
+    }
+  };
+
   const movePo = async (kode) => {
     const po = pos.find((x) => x.kode === kode);
     if (!po || po.kolom >= PO_COLUMNS.length - 1) return;
+
     try {
+      // Jika pindah ke Selesai (kolom 3), update stok barang
+      if (po.kolom === 2) {
+        // Ambil detail barang PO ini
+        const { data: details } = await supabase.from('po_items').select('*').eq('po_id', po.id);
+        
+        // Loop setiap barang, tambah stoknya
+        for (const d of details) {
+          const item = items.find(i => i.id === d.item_id);
+          if (item) {
+            await itemsApi.update(item.sku, { stok: item.stok + d.qty });
+            // Update state lokal
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: i.stok + d.qty } : i));
+          }
+        }
+      }
+
       const updated = await posApi.update(kode, { kolom: po.kolom + 1 });
       setPos((prev) => prev.map((p) => (p.kode === kode ? updated : p)));
       toast(`${kode} dipindah ke ${PO_COLUMNS[po.kolom + 1]}`);
@@ -171,29 +210,52 @@ export function AppProvider({ children }) {
     }
   };
 
-  const createPo = async (supplier = 'Pemasok baru') => {
-    const newPo = {
-      kode: nextPoCode(pos),
-      supplier,
-      amount: Math.round((Math.random() * 40 + 5)) * 1000000,
+    // ---------- SALES ORDER ----------
+  const createSo = async (customer, details) => {
+    // Hitung total amount dari detail
+    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
+    
+    const newSo = {
+      kode: nextSoCode(so),
+      customer,
+      amount: totalAmount,
       kolom: 0,
     };
+
     try {
-      const created = await posApi.create(newPo);
-      setPos((prev) => [created, ...prev]);
-      toast('PO draft dibuat');
+      const created = await soApi.create(newSo, details);
+      setSo((prev) => [created, ...prev]);
+      toast('SO berhasil dibuat');
       return created;
     } catch (err) {
-      toast(`Gagal buat PO: ${err.message}`);
+      toast(`Gagal buat SO: ${err.message}`);
+      throw err;
     }
   };
 
-  // ---------- SALES ORDER ----------
   const moveSo = async (kode) => {
     const s = so.find((x) => x.kode === kode);
     if (!s || s.kolom >= 3) return;
     const columns = ['Baru', 'Diproses', 'Dikirim', 'Selesai'];
+
     try {
+      // Jika pindah ke Selesai (kolom 3), KURANGI stok barang (barang keluar)
+      if (s.kolom === 2) {
+        // Ambil detail barang SO ini
+        const { data: details } = await supabase.from('so_items').select('*').eq('so_id', s.id);
+        
+        // Loop setiap barang, kurangi stoknya
+        for (const d of details) {
+          const item = items.find(i => i.id === d.item_id);
+          if (item) {
+            const newStok = Math.max(0, item.stok - d.qty); // Cegah stok minus
+            await itemsApi.update(item.sku, { stok: newStok });
+            // Update state lokal
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: newStok } : i));
+          }
+        }
+      }
+
       const updated = await soApi.update(kode, { kolom: s.kolom + 1 });
       setSo((prev) => prev.map((x) => (x.kode === kode ? updated : x)));
       toast(`${kode} dipindah ke ${columns[s.kolom + 1]}`);
@@ -201,24 +263,6 @@ export function AppProvider({ children }) {
       toast(`Gagal pindah SO: ${err.message}`);
     }
   };
-
-  const createSo = async (customer = 'Pelanggan baru') => {
-    const newSo = {
-      kode: nextSoCode(so),
-      customer,
-      amount: Math.round((Math.random() * 20 + 2)) * 100000,
-      kolom: 0,
-    };
-    try {
-      const created = await soApi.create(newSo);
-      setSo((prev) => [created, ...prev]);
-      toast('SO baru dibuat');
-      return created;
-    } catch (err) {
-      toast(`Gagal buat SO: ${err.message}`);
-    }
-  };
-
   // ---------- TRANSFERS ----------
   const createTransfer = async (payload) => {
     const newTr = {
@@ -243,6 +287,7 @@ export function AppProvider({ children }) {
       toast(`${kode} → ${status}`);
 
       // Kalau status = 'diterima', kurangi stok di gudang asal
+      // (Gudang tujuan akan otomatis dihitung di halaman Warehouses.jsx)
       if (status === 'diterima') {
         const t = transfers.find((x) => x.kode === kode);
         if (t) {
@@ -286,6 +331,38 @@ export function AppProvider({ children }) {
     }
   };
 
+    // ---------- SUPPLIERS ----------
+  const addSupplier = async (newSupplier) => {
+    try {
+      const created = await suppliersApi.create(newSupplier);
+      setSuppliers((prev) => [...prev, created]);
+      toast('Pemasok ditambahkan');
+      return created;
+    } catch (err) {
+      toast(`Gagal tambah pemasok: ${err.message}`);
+    }
+  };
+
+  const toggleSupplierStatus = async (kode, currentStatus) => {
+    try {
+      const updated = await suppliersApi.update(kode, { aktif: !currentStatus });
+      setSuppliers((prev) => prev.map((s) => (s.kode === kode ? updated : s)));
+      toast(`Pemasok ${updated.nama} ${updated.aktif ? 'diaktifkan' : 'dinonaktifkan'}`);
+    } catch (err) {
+      toast(`Gagal ubah status: ${err.message}`);
+    }
+  };
+
+  const removeSupplier = async (kode) => {
+    try {
+      await suppliersApi.remove(kode);
+      setSuppliers((prev) => prev.filter((s) => s.kode !== kode));
+      toast('Pemasok dihapus');
+    } catch (err) {
+      toast(`Gagal hapus pemasok: ${err.message}`);
+    }
+  };
+
   // ---------- VALUE ----------
   const value = useMemo(
     () => ({
@@ -293,6 +370,8 @@ export function AppProvider({ children }) {
       items, pos, so, transfers, opnames,
       suppliers, warehouses, users,
       loading, error,
+      // suppliers
+      addSupplier, toggleSupplierStatus, removeSupplier,
       // items
       addItem, updateItemStock, removeItem,
       // po

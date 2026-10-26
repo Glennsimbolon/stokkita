@@ -1,35 +1,43 @@
 // ============================================
 // FILE: api/pos.js
-// FUNGSI: Semua request terkait tabel `purchase_orders`
+// FUNGSI: CRUD PO beserta detail barangnya
 // ============================================
 
 import { supabase } from '../lib/supabase';
 
 export const posApi = {
-  // Ambil semua PO, urutkan dari yang terbaru
   async list() {
     const { data, error } = await supabase
       .from('purchase_orders')
       .select('*')
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     return data;
   },
 
-  // Buat PO baru
-  async create(po) {
-    const { data, error } = await supabase
+  async create(po, details) {
+    // 1. Buat header PO
+    const { data: newPo, error: errPo } = await supabase
       .from('purchase_orders')
       .insert(po)
       .select()
       .single();
+    if (errPo) throw errPo;
 
-    if (error) throw error;
-    return data;
+    // 2. Simpan detail barangnya
+    const detailData = details.map(d => ({
+      ...d,
+      po_id: newPo.id
+    }));
+    
+    const { error: errDetail } = await supabase
+      .from('po_items')
+      .insert(detailData);
+    if (errDetail) throw errDetail;
+
+    return newPo;
   },
 
-  // Update PO (partial) — misal pindah kolom kanban
   async update(kode, patch) {
     const { data, error } = await supabase
       .from('purchase_orders')
@@ -37,18 +45,7 @@ export const posApi = {
       .eq('kode', kode)
       .select()
       .single();
-
     if (error) throw error;
     return data;
-  },
-
-  // Hapus PO
-  async remove(kode) {
-    const { error } = await supabase
-      .from('purchase_orders')
-      .delete()
-      .eq('kode', kode);
-
-    if (error) throw error;
   },
 };

@@ -1,6 +1,6 @@
 // ============================================
 // FILE: api/so.js
-// FUNGSI: Semua request untuk tabel sales_orders
+// FUNGSI: CRUD SO beserta detail barangnya
 // ============================================
 
 import { supabase } from '../lib/supabase';
@@ -15,14 +15,27 @@ export const soApi = {
     return data;
   },
 
-  async create(so) {
-    const { data, error } = await supabase
+  async create(so, details) {
+    // 1. Buat header SO
+    const { data: newSo, error: errSo } = await supabase
       .from('sales_orders')
       .insert(so)
       .select()
       .single();
-    if (error) throw error;
-    return data;
+    if (errSo) throw errSo;
+
+    // 2. Simpan detail barangnya
+    const detailData = details.map(d => ({
+      ...d,
+      so_id: newSo.id
+    }));
+    
+    const { error: errDetail } = await supabase
+      .from('so_items')
+      .insert(detailData);
+    if (errDetail) throw errDetail;
+
+    return newSo;
   },
 
   async update(kode, patch) {
@@ -34,13 +47,5 @@ export const soApi = {
       .single();
     if (error) throw error;
     return data;
-  },
-
-  async remove(kode) {
-    const { error } = await supabase
-      .from('sales_orders')
-      .delete()
-      .eq('kode', kode);
-    if (error) throw error;
   },
 };

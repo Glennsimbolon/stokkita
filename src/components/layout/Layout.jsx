@@ -1,13 +1,14 @@
 // ============================================
 // KOMPONEN: Layout
-// FUNGSI: Wrapper semua halaman (Sidebar + Topbar + konten)
-//         + modal tambah barang + toast global
+// FUNGSI: Wrapper semua halaman + Modal Tambah Barang
 // ============================================
 
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Toast } from '../ui/Toast';
+import { Modal } from '../ui/Modal';
+import { NewItemForm } from '../features/NewItemForm';
 import { useApp } from '../../context/AppContext';
 
 export function Layout({ children }) {
@@ -25,19 +26,10 @@ export function Layout({ children }) {
 
       <Toast message={toastMessage} visible={toastVisible} />
 
-      {/* Modal tambah barang akan dibuat di Batch 3 */}
-      {addModalOpen && (
-        <div
-          className="dialog"
-          style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 100 }}
-        >
-          <h3>Form tambah barang</h3>
-          <p className="sub">Akan dibuat di Batch 3.</p>
-          <button className="btn" onClick={() => setAddModalOpen(false)} style={{ marginTop: 12 }}>
-            Tutup
-          </button>
-        </div>
-      )}
+      {/* Modal Tambah Barang Baru — form lengkap dari features/NewItemForm.jsx */}
+      <Modal open={addModalOpen} onClose={() => setAddModalOpen(false)}>
+        <NewItemForm onClose={() => setAddModalOpen(false)} />
+      </Modal>
     </div>
   );
 }
