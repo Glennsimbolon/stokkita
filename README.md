@@ -37,12 +37,3 @@ Aplikasi ini memiliki 12 modul lengkap yang siap digunakan:
 - **Deployment:** Vercel
 
 ---
-
-## 🚀 Cara Menjalankan di Lokal
-
-Jika kamu ingin menjalankan project ini di komputer sendiri, ikuti langkah berikut:
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/Glennsimbolon/stokkita.git
-cd stokkita
