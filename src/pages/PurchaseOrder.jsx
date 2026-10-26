@@ -69,7 +69,30 @@ export default function PurchaseOrder() {
             {pos.filter((p) => p.kolom === ci).map((p) => {
               const isDone = p.kolom >= PO_COLUMNS.length - 1;
               return (
-                <div className="po" key={p.id}>
+                <div className="po" key={p.id} style={{ position: 'relative' }}>
+                  
+                  {/* TOMBOL HAPUS (SOFT DELETE) */}
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Hapus PO ${p.kode} dari laporan?`)) {
+                        softDelete('purchase_orders', p.kode);
+                      }
+                    }}
+                    style={{ 
+                      position: 'absolute', 
+                      top: 8, 
+                      right: 8, 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      opacity: 0.5,
+                      fontSize: 14
+                    }}
+                    title="Sembunyikan PO (Soft Delete)"
+                  >
+                    🗑️
+                  </button>
+
                   <b>{p.kode}</b>
                   <small>{p.supplier}</small>
                   <div className="f">
@@ -88,7 +111,7 @@ export default function PurchaseOrder() {
           </section>
         ))}
       </div>
-
+      
       {/* MODAL FORM BUAT PO */}
       <Modal open={isOpen} onClose={() => setIsOpen(false)}>
         <form onSubmit={handleSubmit} className="stack" style={{ gap: 16 }}>

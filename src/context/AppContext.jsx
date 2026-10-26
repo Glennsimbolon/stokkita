@@ -263,6 +263,34 @@ export function AppProvider({ children }) {
       toast(`Gagal pindah SO: ${err.message}`);
     }
   };
+  
+    // ---------- SOFT DELETE (Hapus Sementara) ----------
+  const softDelete = async (tableName, kode) => {
+    try {
+      const userEmail = session?.user?.email || 'System';
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: userEmail
+        })
+        .eq('kode', kode);
+
+      if (error) throw error;
+      
+      // Update state lokal agar langsung hilang dari layar
+      if (tableName === 'purchase_orders') setPos(prev => prev.filter(p => p.kode !== kode));
+      if (tableName === 'sales_orders') setSo(prev => prev.filter(s => s.kode !== kode));
+      if (tableName === 'suppliers') setSuppliers(prev => prev.filter(s => s.kode !== kode));
+      if (tableName === 'items') setItems(prev => prev.filter(i => i.sku !== kode)); // items pakai sku
+      
+      toast(`Data berhasil dihapus (masuk ke Sampah)`);
+    } catch (err) {
+      toast(`Gagal menghapus: ${err.message}`);
+    }
+  };
+
   // ---------- TRANSFERS ----------
   const createTransfer = async (payload) => {
     const newTr = {

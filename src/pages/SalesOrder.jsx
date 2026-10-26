@@ -16,7 +16,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 
 export default function SalesOrder() {
-  const { items, so, moveSo, createSo } = useApp();
+  const { items, so, moveSo, createSo, softDelete } = useApp();
   
   const [isOpen, setIsOpen] = useState(false);
   const [customer, setCustomer] = useState('Pelanggan Umum');
@@ -67,14 +67,37 @@ export default function SalesOrder() {
         action={<Button variant="pri" onClick={() => setIsOpen(true)}>+ Buat SO</Button>}
       />
 
-      <div className="row">
+       <div className="row">
         {SO_COLUMNS.map((colName, ci) => (
           <section className="col" aria-label={colName} key={colName}>
             <h3>{colName} ({so.filter((s) => s.kolom === ci).length})</h3>
             {so.filter((s) => s.kolom === ci).map((s) => {
               const isDone = s.kolom >= SO_COLUMNS.length - 1;
               return (
-                <div className="po" key={s.id}>
+                <div className="po" key={s.id} style={{ position: 'relative' }}>
+                  
+                  {/* TOMBOL HAPUS (SOFT DELETE) */}
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Hapus SO ${s.kode} dari laporan?`)) {
+                        softDelete('sales_orders', s.kode);
+                      }
+                    }}
+                    style={{ 
+                      position: 'absolute', 
+                      top: 8, 
+                      right: 8, 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      opacity: 0.5,
+                      fontSize: 14
+                    }}
+                    title="Sembunyikan SO (Soft Delete)"
+                  >
+                    🗑️
+                  </button>
+
                   <b>{s.kode}</b>
                   <small>{s.customer}</small>
                   <div className="f">
