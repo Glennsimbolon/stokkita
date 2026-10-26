@@ -15,7 +15,7 @@ export const posApi = {
     return data;
   },
 
-  async create(po, details) {
+   async create(po, details) {
     // 1. Buat header PO
     const { data: newPo, error: errPo } = await supabase
       .from('purchase_orders')
@@ -24,10 +24,13 @@ export const posApi = {
       .single();
     if (errPo) throw errPo;
 
-    // 2. Simpan detail barangnya
+    // 2. Simpan detail barangnya (Hanya ambil kolom yang ada di DB)
     const detailData = details.map(d => ({
-      ...d,
-      po_id: newPo.id
+      po_id: newPo.id,
+      item_id: d.item_id,
+      qty: d.qty,
+      harga_satuan: d.harga_satuan
+      // 'nama' tidak dimasukkan
     }));
     
     const { error: errDetail } = await supabase

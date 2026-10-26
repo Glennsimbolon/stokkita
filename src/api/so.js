@@ -15,7 +15,7 @@ export const soApi = {
     return data;
   },
 
-  async create(so, details) {
+    async create(so, details) {
     // 1. Buat header SO
     const { data: newSo, error: errSo } = await supabase
       .from('sales_orders')
@@ -24,10 +24,13 @@ export const soApi = {
       .single();
     if (errSo) throw errSo;
 
-    // 2. Simpan detail barangnya
+    // 2. Simpan detail barangnya (Hanya ambil kolom yang ada di DB)
     const detailData = details.map(d => ({
-      ...d,
-      so_id: newSo.id
+      so_id: newSo.id,
+      item_id: d.item_id,
+      qty: d.qty,
+      harga_satuan: d.harga_satuan
+      // 'nama' tidak dimasukkan karena tidak ada di tabel database
     }));
     
     const { error: errDetail } = await supabase
