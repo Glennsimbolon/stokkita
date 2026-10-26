@@ -158,13 +158,13 @@ export function AppProvider({ children }) {
     }
   };
 
-  // ---------- PO ----------
+    // ---------- PO ----------
   const createPo = async (supplier, details) => {
-    // Hitung total amount dari detail
     const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
     
+    // ✅ Gunakan timestamp agar kode dijamin unik
     const newPo = {
-      kode: nextPoCode(pos),
+      kode: `PO-${Date.now()}`,
       supplier,
       amount: totalAmount,
       kolom: 0,
@@ -173,50 +173,21 @@ export function AppProvider({ children }) {
     try {
       const created = await posApi.create(newPo, details);
       setPos((prev) => [created, ...prev]);
-      toast('PO berhasil dibuat');
+      toast(`PO ${created.kode} berhasil dibuat`);
       return created;
     } catch (err) {
       toast(`Gagal buat PO: ${err.message}`);
       throw err;
     }
   };
-
-  const movePo = async (kode) => {
-    const po = pos.find((x) => x.kode === kode);
-    if (!po || po.kolom >= PO_COLUMNS.length - 1) return;
-
-    try {
-      // Jika pindah ke Selesai (kolom 3), update stok barang
-      if (po.kolom === 2) {
-        // Ambil detail barang PO ini
-        const { data: details } = await supabase.from('po_items').select('*').eq('po_id', po.id);
-        
-        // Loop setiap barang, tambah stoknya
-        for (const d of details) {
-          const item = items.find(i => i.id === d.item_id);
-          if (item) {
-            await itemsApi.update(item.sku, { stok: item.stok + d.qty });
-            // Update state lokal
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: i.stok + d.qty } : i));
-          }
-        }
-      }
-
-      const updated = await posApi.update(kode, { kolom: po.kolom + 1 });
-      setPos((prev) => prev.map((p) => (p.kode === kode ? updated : p)));
-      toast(`${kode} dipindah ke ${PO_COLUMNS[po.kolom + 1]}`);
-    } catch (err) {
-      toast(`Gagal pindah PO: ${err.message}`);
-    }
-  };
-
-    // ---------- SALES ORDER ----------
+      // ---------- SALES ORDER ----------
   const createSo = async (customer, details) => {
     // Hitung total amount dari detail
     const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
     
+    // ✅ Gunakan timestamp agar kode dijamin unik
     const newSo = {
-      kode: nextSoCode(so),
+      kode: `SO-${Date.now()}`,
       customer,
       amount: totalAmount,
       kolom: 0,
@@ -225,7 +196,7 @@ export function AppProvider({ children }) {
     try {
       const created = await soApi.create(newSo, details);
       setSo((prev) => [created, ...prev]);
-      toast('SO berhasil dibuat');
+      toast(`SO ${created.kode} berhasil dibuat`);
       return created;
     } catch (err) {
       toast(`Gagal buat SO: ${err.message}`);
@@ -233,37 +204,6 @@ export function AppProvider({ children }) {
     }
   };
 
-  const moveSo = async (kode) => {
-    const s = so.find((x) => x.kode === kode);
-    if (!s || s.kolom >= 3) return;
-    const columns = ['Baru', 'Diproses', 'Dikirim', 'Selesai'];
-
-    try {
-      // Jika pindah ke Selesai (kolom 3), KURANGI stok barang (barang keluar)
-      if (s.kolom === 2) {
-        // Ambil detail barang SO ini
-        const { data: details } = await supabase.from('so_items').select('*').eq('so_id', s.id);
-        
-        // Loop setiap barang, kurangi stoknya
-        for (const d of details) {
-          const item = items.find(i => i.id === d.item_id);
-          if (item) {
-            const newStok = Math.max(0, item.stok - d.qty); // Cegah stok minus
-            await itemsApi.update(item.sku, { stok: newStok });
-            // Update state lokal
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: newStok } : i));
-          }
-        }
-      }
-
-      const updated = await soApi.update(kode, { kolom: s.kolom + 1 });
-      setSo((prev) => prev.map((x) => (x.kode === kode ? updated : x)));
-      toast(`${kode} dipindah ke ${columns[s.kolom + 1]}`);
-    } catch (err) {
-      toast(`Gagal pindah SO: ${err.message}`);
-    }
-  };
-  
     // ---------- SOFT DELETE (Hapus Sementara) ----------
   const softDelete = async (tableName, kode) => {
     try {
