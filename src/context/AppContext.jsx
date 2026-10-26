@@ -1,11 +1,12 @@
 // ============================================
 // FILE: AppContext.jsx
-// FUNGSI: State global (semua data + UI state)
+// FUNGSI: State global (Data + Auth + UI) - FINAL
 // ============================================
 
 import {
   createContext, useContext, useState, useEffect, useMemo,
 } from 'react';
+import { supabase } from '../lib/supabase'; // ✅ 1. Tambah import ini
 import { itemsApi }      from '../api/items';
 import { posApi }        from '../api/pos';
 import { soApi }         from '../api/so';
@@ -20,22 +21,6 @@ import { useToast }      from '../hooks/useToast';
 const Ctx = createContext(null);
 
 // ---------- HELPER ----------
-function nextPoCode(existing) {
-  if (!existing.length) return 'PO-2049';
-  const nums = existing
-    .map((p) => parseInt(p.kode.replace('PO-', ''), 10))
-    .filter((n) => !isNaN(n));
-  return `PO-${(nums.length ? Math.max(...nums) : 2048) + 1}`;
-}
-
-function nextSoCode(existing) {
-  if (!existing.length) return 'SO-1001';
-  const nums = existing
-    .map((s) => parseInt(s.kode.replace('SO-', ''), 10))
-    .filter((n) => !isNaN(n));
-  return `SO-${(nums.length ? Math.max(...nums) : 1000) + 1}`;
-}
-
 function nextTransferCode(existing) {
   if (!existing.length) return 'TRF-001';
   const nums = existing
@@ -55,6 +40,9 @@ function nextOpnameCode(existing) {
 }
 
 export function AppProvider({ children }) {
+  // ---------- AUTH STATE ----------
+  const [session, setSession] = useState(null); // ✅ 2. Tambah state session
+
   // ---------- DATA ----------
   const [items, setItems]           = useState([]);
   const [pos, setPos]               = useState([]);
@@ -76,34 +64,36 @@ export function AppProvider({ children }) {
 
   const { message, visible, toast } = useToast();
 
+  // ---------- AUTH CEK SESI ----------
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // ---------- FETCH AWAL ----------
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
+      setLoading(true);
       try {
         const [
           itemsData, posData, soData, trData, opData,
           supData, whData, userData,
         ] = await Promise.all([
-          itemsApi.list(),
-          posApi.list(),
-          soApi.list(),
-          transfersApi.list(),
-          opnamesApi.list(),
-          suppliersApi.list(),
-          warehousesApi.list(),
-          usersApi.list(),
+          itemsApi.list(), posApi.list(), soApi.list(),
+          transfersApi.list(), opnamesApi.list(),
+          suppliersApi.list(), warehousesApi.list(), usersApi.list(),
         ]);
         if (!cancelled) {
-          setItems(itemsData);
-          setPos(posData);
-          setSo(soData);
-          setTransfers(trData);
-          setOpnames(opData);
-          setSuppliers(supData);
-          setWarehouses(whData);
-          setUsers(userData);
+          setItems(itemsData); setPos(posData); setSo(soData);
+          setTransfers(trData); setOpnames(opData); setSuppliers(supData);
+          setWarehouses(whData); setUsers(userData); setError(null);
         }
       } catch (err) {
         if (!cancelled) setError(err);
@@ -114,7 +104,7 @@ export function AppProvider({ children }) {
 
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [session]); // Fetch ulang setiap login/logout
 
   // ---------- NAVIGASI ----------
   const go = (p) => {
@@ -158,18 +148,22 @@ export function AppProvider({ children }) {
     }
   };
 
-    // ---------- PO ----------
+  // ---------- PO ----------
+  const movePo = async (kode) => { // ✅ 3. Kembalikan fungsi movePo
+    const po = pos.find((x) => x.kode === kode);
+    if (!po || po.kolom >= PO_COLUMNS.length - 1) return;
+    try {
+      const updated = await posApi.update(kode, { kolom: po.kolom + 1 });
+      setPos((prev) => prev.map((p) => (p.kode === kode ? updated : p)));
+      toast(`${kode} dipindah ke ${PO_COLUMNS[po.kolom + 1]}`);
+    } catch (err) {
+      toast(`Gagal pindah PO: ${err.message}`);
+    }
+  };
+
   const createPo = async (supplier, details) => {
     const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
-    
-    // ✅ Gunakan timestamp agar kode dijamin unik
-    const newPo = {
-      kode: `PO-${Date.now()}`,
-      supplier,
-      amount: totalAmount,
-      kolom: 0,
-    };
-
+    const newPo = { kode: `PO-${Date.now()}`, supplier, amount: totalAmount, kolom: 0 };
     try {
       const created = await posApi.create(newPo, details);
       setPos((prev) => [created, ...prev]);
@@ -180,19 +174,24 @@ export function AppProvider({ children }) {
       throw err;
     }
   };
-      // ---------- SALES ORDER ----------
-  const createSo = async (customer, details) => {
-    // Hitung total amount dari detail
-    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
-    
-    // ✅ Gunakan timestamp agar kode dijamin unik
-    const newSo = {
-      kode: `SO-${Date.now()}`,
-      customer,
-      amount: totalAmount,
-      kolom: 0,
-    };
 
+  // ---------- SO ----------
+  const moveSo = async (kode) => { // ✅ 3. Kembalikan fungsi moveSo
+    const s = so.find((x) => x.kode === kode);
+    if (!s || s.kolom >= 3) return;
+    const columns = ['Baru', 'Diproses', 'Dikirim', 'Selesai'];
+    try {
+      const updated = await soApi.update(kode, { kolom: s.kolom + 1 });
+      setSo((prev) => prev.map((x) => (x.kode === kode ? updated : x)));
+      toast(`${kode} dipindah ke ${columns[s.kolom + 1]}`);
+    } catch (err) {
+      toast(`Gagal pindah SO: ${err.message}`);
+    }
+  };
+
+  const createSo = async (customer, details) => {
+    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
+    const newSo = { kode: `SO-${Date.now()}`, customer, amount: totalAmount, kolom: 0 };
     try {
       const created = await soApi.create(newSo, details);
       setSo((prev) => [created, ...prev]);
@@ -204,26 +203,20 @@ export function AppProvider({ children }) {
     }
   };
 
-    // ---------- SOFT DELETE (Hapus Sementara) ----------
+  // ---------- SOFT DELETE ----------
   const softDelete = async (tableName, kode) => {
     try {
       const userEmail = session?.user?.email || 'System';
-      
       const { error } = await supabase
         .from(tableName)
-        .update({ 
-          deleted_at: new Date().toISOString(),
-          deleted_by: userEmail
-        })
+        .update({ deleted_at: new Date().toISOString(), deleted_by: userEmail })
         .eq('kode', kode);
 
       if (error) throw error;
       
-      // Update state lokal agar langsung hilang dari layar
       if (tableName === 'purchase_orders') setPos(prev => prev.filter(p => p.kode !== kode));
       if (tableName === 'sales_orders') setSo(prev => prev.filter(s => s.kode !== kode));
       if (tableName === 'suppliers') setSuppliers(prev => prev.filter(s => s.kode !== kode));
-      if (tableName === 'items') setItems(prev => prev.filter(i => i.sku !== kode)); // items pakai sku
       
       toast(`Data berhasil dihapus (masuk ke Sampah)`);
     } catch (err) {
@@ -233,11 +226,7 @@ export function AppProvider({ children }) {
 
   // ---------- TRANSFERS ----------
   const createTransfer = async (payload) => {
-    const newTr = {
-      kode: nextTransferCode(transfers),
-      ...payload,
-      status: 'pending',
-    };
+    const newTr = { kode: nextTransferCode(transfers), ...payload, status: 'pending' };
     try {
       const created = await transfersApi.create(newTr);
       setTransfers((prev) => [created, ...prev]);
@@ -254,8 +243,6 @@ export function AppProvider({ children }) {
       setTransfers((prev) => prev.map((t) => (t.kode === kode ? updated : t)));
       toast(`${kode} → ${status}`);
 
-      // Kalau status = 'diterima', kurangi stok di gudang asal
-      // (Gudang tujuan akan otomatis dihitung di halaman Warehouses.jsx)
       if (status === 'diterima') {
         const t = transfers.find((x) => x.kode === kode);
         if (t) {
@@ -274,15 +261,11 @@ export function AppProvider({ children }) {
 
   // ---------- OPNAME ----------
   const createOpname = async (payload) => {
-    const newOp = {
-      kode: nextOpnameCode(opnames),
-      ...payload,
-    };
+    const newOp = { kode: nextOpnameCode(opnames), ...payload };
     try {
       const created = await opnamesApi.create(newOp);
       setOpnames((prev) => [created, ...prev]);
 
-      // Update stok item ke stok fisik
       const item = items.find((i) => i.id === payload.item_id);
       if (item) {
         const updatedItem = await itemsApi.update(item.sku, {
@@ -291,7 +274,6 @@ export function AppProvider({ children }) {
         });
         setItems((prev) => prev.map((i) => (i.id === item.id ? updatedItem : i)));
       }
-
       toast('Opname disimpan');
       return created;
     } catch (err) {
@@ -299,7 +281,7 @@ export function AppProvider({ children }) {
     }
   };
 
-    // ---------- SUPPLIERS ----------
+  // ---------- SUPPLIERS ----------
   const addSupplier = async (newSupplier) => {
     try {
       const created = await suppliersApi.create(newSupplier);
@@ -334,34 +316,21 @@ export function AppProvider({ children }) {
   // ---------- VALUE ----------
   const value = useMemo(
     () => ({
-      // data
-      items, pos, so, transfers, opnames,
-      suppliers, warehouses, users,
-      loading, error,
-      // suppliers
+      items, pos, so, transfers, opnames, suppliers, warehouses, users,
+      loading, error, session, // ✅ Kembalikan session
       addSupplier, toggleSupplierStatus, removeSupplier,
-      // items
       addItem, updateItemStock, removeItem,
-      // po
       movePo, createPo,
-      // so
       moveSo, createSo,
-      // transfers
       createTransfer, updateTransferStatus,
-      // opnames
-      createOpname,
-      // ui
-      page, go, tab, setTab,
-      gudang, setGudang,
-      query, setQuery,
+      createOpname, softDelete,
+      page, go, tab, setTab, gudang, setGudang, query, setQuery,
       sidebarOpen, setSidebarOpen,
-      // toast
       toast, toastMessage: message, toastVisible: visible,
     }),
     [
-      items, pos, so, transfers, opnames,
-      suppliers, warehouses, users,
-      loading, error,
+      items, pos, so, transfers, opnames, suppliers, warehouses, users,
+      loading, error, session,
       page, tab, gudang, query, sidebarOpen,
       message, visible,
     ]
