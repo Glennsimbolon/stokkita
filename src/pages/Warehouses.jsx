@@ -17,24 +17,20 @@ export default function Warehouses() {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({ kode: '', nama: '', kota: '', kapasitas: 10000 });
 
-  const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.kode.trim() || !form.nama.trim()) return alert('Kode & Nama wajib diisi!');
+    if (!form.nama.trim()) return alert('Nama gudang wajib diisi!');
 
-    if (warehouses.some((w) => w.kode.toLowerCase() === form.kode.toLowerCase())) {
-      return alert(`Kode gudang ${form.kode} sudah ada!`);
-    }
-
+    // ✅ Tidak mengirim 'kode', karena akan dibuat otomatis di AppContext
     await addWarehouse({
-      kode: form.kode.trim().toUpperCase(),
       nama: form.nama.trim(),
       kota: form.kota.trim() || form.nama.trim(),
       kapasitas: Number(form.kapasitas),
     });
+    
     setIsOpen(false);
     setForm({ kode: '', nama: '', kota: '', kapasitas: 10000 });
   };
-
   // Hitung statistik per gudang
   const getStats = (namaGudang) => {
     const stokAwal = items.filter((i) => i.gudang === namaGudang).reduce((a, i) => a + i.stok, 0);
@@ -115,33 +111,28 @@ export default function Warehouses() {
         })}
       </div>
 
-      {/* Modal Tambah Gudang */}
+            {/* Modal Tambah Gudang */}
       <Modal open={isOpen} onClose={() => setIsOpen(false)}>
         <form onSubmit={handleSubmit} className="stack" style={{ gap: 16 }}>
           <h2 style={{ margin: 0 }}>Tambah Gudang Baru</h2>
+          <p className="sub" style={{ marginTop: -8, marginBottom: 4 }}>
+            Kode gudang akan dibuat otomatis oleh sistem.
+          </p>
           
           <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--mut)', marginBottom: 12, textTransform: 'uppercase' }}>
               📍 Informasi Gudang
             </div>
-            <div className="row">
-              <Input
-                label="Kode Gudang *"
-                placeholder="cth: W-04"
-                value={form.kode}
-                onChange={(e) => setForm({ ...form, kode: e.target.value })}
-                required
-                style={{ flex: 1 }}
-              />
-              <Input
-                label="Nama Gudang *"
-                placeholder="cth: Bandung"
-                value={form.nama}
-                onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                required
-                style={{ flex: 2 }}
-              />
-            </div>
+
+            {/* ✅ Input Kode Gudang DIHAPUS */}
+            <Input
+              label="Nama Gudang *"
+              placeholder="cth: Bandung"
+              value={form.nama}
+              onChange={(e) => setForm({ ...form, nama: e.target.value })}
+              required
+            />
+            
             <div className="row" style={{ marginTop: 12 }}>
               <Input
                 label="Kota"

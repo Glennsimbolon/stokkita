@@ -347,6 +347,30 @@ export function AppProvider({ children }) {
       toast(`Gagal hapus pemasok: ${err.message}`);
     }
   };
+    // ---------- WAREHOUSES ----------
+  const addWarehouse = async (newWarehouse) => {
+    try {
+      // ✅ Generate kode otomatis: W-01, W-02, W-03, dst
+      const existingKodes = warehouses
+        .map((w) => parseInt(w.kode.replace('W-', ''), 10))
+        .filter((n) => !isNaN(n));
+      
+      const nextNumber = existingKodes.length ? Math.max(...existingKodes) + 1 : 1;
+      const kodeOtomatis = `W-${String(nextNumber).padStart(2, '0')}`;
+      
+      // Simpan gudang dengan kode otomatis
+      const created = await warehousesApi.create({
+        ...newWarehouse,
+        kode: kodeOtomatis,
+      });
+      
+      setWarehouses((prev) => [...prev, created]);
+      toast(`Gudang ${created.nama} ditambahkan (${created.kode})`);
+      return created;
+    } catch (err) {
+      toast(`Gagal tambah gudang: ${err.message}`);
+    }
+  };
 
   // ---------- VALUE ----------
   const value = useMemo(
