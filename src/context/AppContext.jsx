@@ -149,10 +149,24 @@ export function AppProvider({ children }) {
   };
 
   // ---------- PO ----------
-  const movePo = async (kode) => { // ✅ 3. Kembalikan fungsi movePo
+    const movePo = async (kode) => {
     const po = pos.find((x) => x.kode === kode);
     if (!po || po.kolom >= PO_COLUMNS.length - 1) return;
+    
     try {
+      // ✅ JIKA PINDAH KE SELESAI, TAMBAH STOK
+      if (po.kolom === 2) { 
+        const { data: details } = await supabase.from('po_items').select('*').eq('po_id', po.id);
+        for (const d of details) {
+          const item = items.find(i => i.id === d.item_id);
+          if (item) {
+            const newStok = item.stok + d.qty;
+            await itemsApi.update(item.sku, { stok: newStok });
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: newStok } : i));
+          }
+        }
+      }
+
       const updated = await posApi.update(kode, { kolom: po.kolom + 1 });
       setPos((prev) => prev.map((p) => (p.kode === kode ? updated : p)));
       toast(`${kode} dipindah ke ${PO_COLUMNS[po.kolom + 1]}`);
@@ -181,9 +195,7 @@ export function AppProvider({ children }) {
     const columns = ['Baru', 'Diproses', 'Dikirim', 'Selesai'];
 
     try {
-      // ✅ LOGIKA KRUSIAL: Jika pindah ke Selesai (kolom 3), potong stok!
       if (s.kolom === 2) {
-        // 1. Ambil daftar barang yang dipesan di SO ini
         const { data: details, error: errDetail } = await supabase
           .from('so_items')
           .select('*')
@@ -191,20 +203,19 @@ export function AppProvider({ children }) {
           
         if (errDetail) throw errDetail;
 
-        // 2. Loop setiap barang, kurangi stoknya
         for (const d of details) {
           const item = items.find(i => i.id === d.item_id);
           if (item) {
             const newStok = Math.max(0, item.stok - d.qty); // Cegah stok minus
             await itemsApi.update(item.sku, { stok: newStok });
             
-            // Update state lokal agar langsung tampil di layar
+           
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: newStok } : i));
           }
         }
       }
 
-      // 3. Update status kolom SO
+    
       const updated = await soApi.update(kode, { kolom: s.kolom + 1 });
       setSo((prev) => prev.map((x) => (x.kode === kode ? updated : x)));
       
