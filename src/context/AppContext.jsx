@@ -377,7 +377,7 @@ export function AppProvider({ children }) {
     () => ({
       items, pos, so, transfers, opnames, suppliers, warehouses, users,
       loading, error, session, // ✅ Kembalikan session
-      addSupplier, toggleSupplierStatus, removeSupplier,
+      addSupplier, toggleSupplierStatus, removeSupplier,addWarehouse,
       addItem, updateItemStock, removeItem,
       movePo, createPo,
       moveSo, createSo,
