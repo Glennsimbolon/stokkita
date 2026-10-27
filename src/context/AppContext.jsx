@@ -175,31 +175,43 @@ export function AppProvider({ children }) {
     }
   };
 
-  // ---------- SO ----------
-  const moveSo = async (kode) => { // ✅ 3. Kembalikan fungsi moveSo
+    // ---------- SO ----------
+  const moveSo = async (kode) => {
     const s = so.find((x) => x.kode === kode);
     if (!s || s.kolom >= 3) return;
     const columns = ['Baru', 'Diproses', 'Dikirim', 'Selesai'];
+
     try {
+      // ✅ LOGIKA KRUSIAL: Jika pindah ke Selesai (kolom 3), potong stok!
+      if (s.kolom === 2) {
+        // 1. Ambil daftar barang yang dipesan di SO ini
+        const { data: details, error: errDetail } = await supabase
+          .from('so_items')
+          .select('*')
+          .eq('so_id', s.id);
+          
+        if (errDetail) throw errDetail;
+
+        // 2. Loop setiap barang, kurangi stoknya
+        for (const d of details) {
+          const item = items.find(i => i.id === d.item_id);
+          if (item) {
+            const newStok = Math.max(0, item.stok - d.qty); // Cegah stok minus
+            await itemsApi.update(item.sku, { stok: newStok });
+            
+            // Update state lokal agar langsung tampil di layar
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, stok: newStok } : i));
+          }
+        }
+      }
+
+      // 3. Update status kolom SO
       const updated = await soApi.update(kode, { kolom: s.kolom + 1 });
       setSo((prev) => prev.map((x) => (x.kode === kode ? updated : x)));
+      
       toast(`${kode} dipindah ke ${columns[s.kolom + 1]}`);
     } catch (err) {
       toast(`Gagal pindah SO: ${err.message}`);
-    }
-  };
-
-  const createSo = async (customer, details) => {
-    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
-    const newSo = { kode: `SO-${Date.now()}`, customer, amount: totalAmount, kolom: 0 };
-    try {
-      const created = await soApi.create(newSo, details);
-      setSo((prev) => [created, ...prev]);
-      toast(`SO ${created.kode} berhasil dibuat`);
-      return created;
-    } catch (err) {
-      toast(`Gagal buat SO: ${err.message}`);
-      throw err;
     }
   };
 
