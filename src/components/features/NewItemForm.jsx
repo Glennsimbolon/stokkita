@@ -1,6 +1,6 @@
 // ============================================
 // KOMPONEN: NewItemForm
-// FUNGSI: Form tambah barang dengan Auto-SKU
+// FUNGSI: Form tambah barang dengan Auto-SKU (SKU tersembunyi)
 // ============================================
 
 import { useState, useEffect } from 'react';
@@ -36,24 +36,15 @@ export function NewItemForm({ onClose }) {
     ed_hari: '',
   });
 
-  // ✅ GENERATE SKU OTOMATIS
-  // Berjalan setiap kali kategori berubah, atau daftar items berubah
+  // ✅ GENERATE SKU OTOMATIS (tetap di belakang layar)
   useEffect(() => {
     const prefix = SKU_PREFIX[form.kategori] || 'UMN';
-    
-    // Cari semua produk dengan prefix yang sama di database
     const samePrefix = items
       .filter((i) => i.sku.startsWith(prefix + '-'))
       .map((i) => parseInt(i.sku.split('-')[1], 10))
       .filter((n) => !isNaN(n));
-    
-    // Ambil nomor terbesar, lalu +1
     const nextNumber = samePrefix.length ? Math.max(...samePrefix) + 1 : 1;
-    
-    // Format jadi 3 digit (001, 002, dst)
     const nextSku = `${prefix}-${String(nextNumber).padStart(3, '0')}`;
-    
-    // Simpan ke state form
     setForm((prev) => ({ ...prev, sku: nextSku }));
   }, [form.kategori, items]);
 
@@ -69,7 +60,6 @@ export function NewItemForm({ onClose }) {
       toast('Nama produk wajib diisi!');
       return;
     }
-
     if (Number(form.harga) <= 0) {
       toast('Harga harus lebih dari 0!');
       return;
@@ -102,45 +92,37 @@ export function NewItemForm({ onClose }) {
       <div>
         <h2 style={{ margin: 0 }}>Tambah Barang Baru</h2>
         <p className="sub" style={{ marginTop: 4 }}>
-          Pilih kategori, sistem akan membuatkan SKU otomatis.
+          Cukup isi data barang, SKU akan dibuat otomatis oleh sistem.
         </p>
       </div>
 
-      {/* BAGIAN 1: KATEGORI & SKU */}
+      {/* BAGIAN 1: KATEGORI & NAMA */}
       <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--mut)', marginBottom: 12, textTransform: 'uppercase' }}>
-          📦 Kategori & Kode
+          📦 Informasi Produk
         </div>
         
-        <div className="row" style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12 }}>
           <Select 
             label="Kategori Produk *" 
             name="kategori" 
             value={form.kategori} 
             onChange={handleChange} 
-            style={{ flex: 1 }}
           >
             {Object.keys(SKU_PREFIX).map((k) => <option key={k}>{k}</option>)}
           </Select>
-          
-          {/* Kotak SKU (Read-only, tidak bisa diedit) */}
-          <div style={{ flex: 1 }}>
-            <label className="field">
-              SKU Otomatis
-              <input
-                value={form.sku}
-                readOnly
-                style={{
-                  background: '#CCFBF1',
-                  fontWeight: 700,
-                  color: '#0F766E',
-                  cursor: 'not-allowed',
-                  textAlign: 'center',
-                  letterSpacing: 1,
-                }}
-                title="SKU dibuat otomatis oleh sistem"
-              />
-            </label>
+          {/* ✅ Preview kecil (bukan input, hanya teks) */}
+          <div style={{ 
+            fontSize: 11, 
+            color: 'var(--mut)', 
+            marginTop: 6, 
+            fontStyle: 'italic',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}>
+            <span>🔖</span>
+            <span>SKU otomatis: <b style={{ color: 'var(--acc)' }}>{form.sku}</b></span>
           </div>
         </div>
 
