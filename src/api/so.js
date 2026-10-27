@@ -40,6 +40,19 @@ export const soApi = {
 
     return newSo;
   },
+  
+  async getDetails(soId) {
+    const { data, error } = await supabase
+      .from('so_items')
+      .select(`
+        *,
+        items ( sku, nama )
+      `)
+      .eq('so_id', soId);
+      
+    if (error) throw error;
+    return data;
+  },
 
   async update(kode, patch) {
     const { data, error } = await supabase
