@@ -41,6 +41,19 @@ export const posApi = {
     return newPo;
   },
 
+  async getDetails(poId) {
+    const { data, error } = await supabase
+      .from('po_items')
+      .select(`
+        *,
+        items ( sku, nama )
+      `)
+      .eq('po_id', poId);
+      
+    if (error) throw error;
+    return data;
+  },
+
   async update(kode, patch) {
     const { data, error } = await supabase
       .from('purchase_orders')
