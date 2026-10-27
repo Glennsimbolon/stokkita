@@ -381,9 +381,9 @@ export function AppProvider({ children }) {
   };
 
   // ✅ FUNGSI HAPUS GUDANG (Ini yang tadi hilang)
-  const deleteWarehouse = async (kode) => {
+   const deleteWarehouse = async (kode) => {
     try {
-      await warehousesApi.remove(kode);
+      await warehousesApi.remove(kode); // Pastikan API ini ada
       setWarehouses((prev) => prev.filter((w) => w.kode !== kode));
       toast('Gudang dihapus');
     } catch (err) {
