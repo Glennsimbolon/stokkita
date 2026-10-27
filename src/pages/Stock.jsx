@@ -16,7 +16,8 @@ import { Tabs } from '../components/ui/Tabs';
 import { PageHeader } from '../components/ui/PageHeader';
 
 export default function Stock() {
-  const { items, tab, setTab, gudang, setGudang, query, updateItemStock } = useApp();
+  // ✅ Hapus updateItemStock, tambahkan softDelete
+  const { items, tab, setTab, gudang, setGudang, query, softDelete } = useApp();
 
   // ---------- DERIVED ----------
   const filtered = useMemo(() => {
@@ -93,12 +94,18 @@ export default function Stock() {
                     <td><Badge tone={tone}>{label}</Badge></td>
                     <td>{rp(i.stok * i.harga)}</td>
                     <td>
+                      {/* ✅ Hanya Tombol Hapus (Soft Delete) */}
                       <Button
                         size="sm"
-                        onClick={() => updateItemStock(i.sku, 50)}
-                        aria-label={`Tambah stok ${i.nama}`}
+                        onClick={() => {
+                          if (window.confirm(`Sembunyikan produk ${i.nama} dari daftar?`)) {
+                            softDelete('items', i.sku);
+                          }
+                        }}
+                        style={{ color: '#ef4444' }}
+                        aria-label={`Hapus ${i.nama}`}
                       >
-                        + Terima
+                        🗑️
                       </Button>
                     </td>
                   </tr>
