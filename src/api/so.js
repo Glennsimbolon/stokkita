@@ -6,10 +6,11 @@
 import { supabase } from '../lib/supabase';
 
 export const soApi = {
-  async list() {
+    async list() {
     const { data, error } = await supabase
       .from('sales_orders')
       .select('*')
+      .is('deleted_at', null) // ✅ TAMBAHKAN BARIS INI
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;

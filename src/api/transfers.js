@@ -10,7 +10,8 @@ export const transfersApi = {
     const { data, error } = await supabase
       .from('transfers')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .is('deleted_at', null);
     if (error) throw error;
     return data;
   },

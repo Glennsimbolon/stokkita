@@ -6,14 +6,16 @@
 import { supabase } from '../lib/supabase';
 
 export const posApi = {
-  async list() {
+   async list() {
     const { data, error } = await supabase
       .from('purchase_orders')
       .select('*')
+      .is('deleted_at', null) // ✅ TAMBAHKAN BARIS INI
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
   },
+
 
    async create(po, details) {
     // 1. Buat header PO

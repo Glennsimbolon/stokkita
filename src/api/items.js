@@ -7,12 +7,12 @@ import { supabase } from '../lib/supabase';
 
 export const itemsApi = {
   // Ambil semua produk
-  async list() {
+   async list() {
     const { data, error } = await supabase
       .from('items')
       .select('*')
+      .is('deleted_at', null) // ✅ TAMBAHKAN BARIS INI
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     return data;
   },
