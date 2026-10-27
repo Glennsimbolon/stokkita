@@ -347,10 +347,9 @@ export function AppProvider({ children }) {
       toast(`Gagal hapus pemasok: ${err.message}`);
     }
   };
-    // ---------- WAREHOUSES ----------
+     // ---------- WAREHOUSES ----------
   const addWarehouse = async (newWarehouse) => {
     try {
-      // ✅ Generate kode otomatis: W-01, W-02, W-03, dst
       const existingKodes = warehouses
         .map((w) => parseInt(w.kode.replace('W-', ''), 10))
         .filter((n) => !isNaN(n));
@@ -358,7 +357,6 @@ export function AppProvider({ children }) {
       const nextNumber = existingKodes.length ? Math.max(...existingKodes) + 1 : 1;
       const kodeOtomatis = `W-${String(nextNumber).padStart(2, '0')}`;
       
-      // Simpan gudang dengan kode otomatis
       const created = await warehousesApi.create({
         ...newWarehouse,
         kode: kodeOtomatis,
@@ -372,13 +370,34 @@ export function AppProvider({ children }) {
     }
   };
 
+  const updateWarehouse = async (kode, patch) => {
+    try {
+      const updated = await warehousesApi.update(kode, patch);
+      setWarehouses((prev) => prev.map((w) => (w.kode === kode ? updated : w)));
+      toast('Gudang diperbarui');
+    } catch (err) {
+      toast(`Gagal update gudang: ${err.message}`);
+    }
+  };
+
+  // ✅ FUNGSI HAPUS GUDANG (Ini yang tadi hilang)
+  const deleteWarehouse = async (kode) => {
+    try {
+      await warehousesApi.remove(kode);
+      setWarehouses((prev) => prev.filter((w) => w.kode !== kode));
+      toast('Gudang dihapus');
+    } catch (err) {
+      toast(`Gagal hapus gudang: ${err.message}`);
+    }
+  };
+
   // ---------- VALUE ----------
   const value = useMemo(
     () => ({
       items, pos, so, transfers, opnames, suppliers, warehouses, users,
       loading, error, session, // ✅ Kembalikan session
       addSupplier, toggleSupplierStatus, removeSupplier,addWarehouse,
-      addItem, updateItemStock, removeItem,
+      addItem, updateItemStock, removeItem, addWarehouse, updateWarehouse, deleteWarehouse,
       movePo, createPo,
       moveSo, createSo,
       createTransfer, updateTransferStatus,

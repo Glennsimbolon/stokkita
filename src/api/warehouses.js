@@ -47,4 +47,3 @@ export const warehousesApi = {
       .eq('kode', kode);
     if (error) throw error;
   },
-};

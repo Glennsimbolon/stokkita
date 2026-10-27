@@ -70,18 +70,18 @@ export default function Warehouses() {
                   <div className="sub">{w.kode} · {w.kota}</div>
                 </div>
                 <Button
-                  size="sm"
-                  onClick={() => {
-                    if (stats.stokAwal > 0) {
-                      alert(`Tidak bisa hapus! Masih ada ${stats.stokAwal} unit di gudang ini.`);
-                      return;
-                    }
-                    if (window.confirm(`Hapus gudang ${w.nama}?`)) deleteWarehouse(w.kode);
-                  }}
-                  style={{ color: '#ef4444' }}
-                >
-                  🗑️
-                </Button>
+  size="sm"
+  onClick={() => {
+    if (stats.stokAwal > 0) {
+      alert(`Tidak bisa hapus! Masih ada ${stats.stokAwal} unit di gudang ini.`);
+      return;
+    }
+    if (window.confirm(`Hapus gudang ${w.nama}?`)) deleteWarehouse(w.kode);
+  }}
+  style={{ color: '#ef4444' }}
+>
+  🗑️
+</Button>
               </div>
 
               {/* Statistik */}
