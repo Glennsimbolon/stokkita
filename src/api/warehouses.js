@@ -16,7 +16,7 @@ export const warehousesApi = {
     return data;
   },
 
-  // ✅ TAMBAH GUDANG BARU (Ini yang tadi hilang)
+  // Tambah gudang baru
   async create(warehouse) {
     const { data, error } = await supabase
       .from('warehouses')
@@ -47,3 +47,4 @@ export const warehousesApi = {
       .eq('kode', kode);
     if (error) throw error;
   },
+};
