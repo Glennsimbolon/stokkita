@@ -1,6 +1,6 @@
 // ============================================
 // PAGE: Reports
-// FUNGSI: Laporan lengkap (Aset, PO, SO, Opname, Transfer)
+// FUNGSI: Laporan lengkap + Export CSV & PDF
 // ============================================
 
 import { useMemo } from 'react';
@@ -8,7 +8,10 @@ import { useApp } from '../context/AppContext';
 import { rp, nf } from '../utils/format';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { GUDANG } from '../data/constants';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function Reports() {
   const { items, pos, so, transfers, opnames } = useApp();
@@ -43,16 +46,105 @@ export default function Reports() {
       .slice(0, 10);
   }, [items]);
 
+  // ---------- EXPORT CSV ----------
+  const handleExportCSV = () => {
+    const headers = ['SKU', 'Nama', 'Kategori', 'Gudang', 'Stok', 'Harga', 'Total Nilai'];
+    const rows = items.map((i) => [
+      i.sku, `"${i.nama}"`, i.kategori, i.gudang, i.stok, i.harga, i.stok * i.harga,
+    ]);
+    const csvContent = [headers, ...rows].map((e) => e.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Laporan_StokKita_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---------- EXPORT PDF ----------
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(15, 118, 110);
+    doc.text('StokKita — Laporan Persediaan', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, 27, { align: 'center' });
+
+    // Ringkasan
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text(`Total Nilai Aset: Rp ${totalNilaiAset.toLocaleString('id-ID')}`, 14, 40);
+    doc.text(`Total Belanja (PO): Rp ${totalBelanja.toLocaleString('id-ID')} (${totalPO} PO)`, 14, 47);
+    doc.text(`Total Pendapatan (SO): Rp ${totalPendapatan.toLocaleString('id-ID')} (${totalSO} SO)`, 14, 54);
+    doc.text(`Total Opname: ${totalOpname} kali · Total Transfer: ${totalTransfer} kali`, 14, 61);
+
+    // Tabel 1: Nilai Aset per Gudang
+    autoTable(doc, {
+      startY: 70,
+      head: [['Gudang', 'Total Unit', 'Nilai Aset']],
+      body: nilaiPerGudang.map((g) => [
+        g.gudang, nf(g.unit), `Rp ${g.nilai.toLocaleString('id-ID')}`,
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: [15, 118, 110] },
+      styles: { fontSize: 10 },
+    });
+
+    // Tabel 2: Top 10 Produk
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text('10 Produk Nilai Stok Terbesar', 14, finalY);
+
+    autoTable(doc, {
+      startY: finalY + 4,
+      head: [['SKU', 'Produk', 'Gudang', 'Stok', 'Harga', 'Total Nilai']],
+      body: produkTermahal.map((i) => [
+        i.sku, i.nama, i.gudang, nf(i.stok),
+        `Rp ${i.harga.toLocaleString('id-ID')}`,
+        `Rp ${(i.stok * i.harga).toLocaleString('id-ID')}`,
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: [15, 118, 110] },
+      styles: { fontSize: 9 },
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Halaman ${i} dari ${pageCount} — StokKita`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`Laporan_StokKita_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <>
       <PageHeader
         title="Laporan & Analitik"
         subtitle="Ringkasan seluruh aktivitas bisnis StokKita"
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button onClick={handleExportCSV}>📥 Export CSV</Button>
+            <Button variant="pri" onClick={handleExportPDF}>📄 Export PDF</Button>
+          </div>
+        }
       />
 
-      {/* ====== BAGIAN 1: KARTU UTAMA ====== */}
+      {/* ====== KARTU UTAMA ====== */}
       <div className="row">
-        {/* Kartu Nilai Aset (Gelap) */}
         <Card className="kpi" style={{ flex: 2, background: 'var(--side)', color: '#fff', padding: 24 }}>
           <div className="l" style={{ color: '#CFE3E1', fontSize: 13 }}>Nilai Aset Persediaan</div>
           <div className="v" style={{ color: 'var(--mint)', fontSize: 32, margin: '8px 0' }}>
@@ -63,14 +155,12 @@ export default function Reports() {
           </div>
         </Card>
 
-        {/* Kartu Belanja */}
         <Card className="kpi" style={{ flex: 1 }}>
           <div className="l">Total Belanja (PO)</div>
           <div className="v" style={{ color: '#DC2626' }}>{rp(totalBelanja)}</div>
           <div className="d">{totalPO} Purchase Order</div>
         </Card>
 
-        {/* Kartu Pendapatan */}
         <Card className="kpi" style={{ flex: 1 }}>
           <div className="l">Total Pendapatan (SO)</div>
           <div className="v" style={{ color: '#166534' }}>{rp(totalPendapatan)}</div>
@@ -78,9 +168,8 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* ====== BAGIAN 2: GRID DETAIL ====== */}
+      {/* ====== GRID DETAIL ====== */}
       <div className="row">
-        {/* Nilai Aset per Gudang */}
         <Card style={{ flex: 1, minWidth: 280 }}>
           <div className="h2">Nilai Aset per Gudang</div>
           {nilaiPerGudang.map((g) => (
@@ -94,26 +183,12 @@ export default function Reports() {
           ))}
         </Card>
 
-        {/* Ringkasan Operasional */}
         <Card style={{ flex: 1, minWidth: 280 }}>
           <div className="h2">Ringkasan Operasional</div>
-          
-          <div className="li">
-            <span>PO Selesai</span>
-            <b>{poSelesai} / {totalPO}</b>
-          </div>
-          <div className="li">
-            <span>SO Selesai</span>
-            <b>{soSelesai} / {totalSO}</b>
-          </div>
-          <div className="li">
-            <span>Total Transfer Gudang</span>
-            <b>{totalTransfer} kali</b>
-          </div>
-          <div className="li">
-            <span>Stock Opname</span>
-            <b>{totalOpname} kali</b>
-          </div>
+          <div className="li"><span>PO Selesai</span><b>{poSelesai} / {totalPO}</b></div>
+          <div className="li"><span>SO Selesai</span><b>{soSelesai} / {totalSO}</b></div>
+          <div className="li"><span>Total Transfer Gudang</span><b>{totalTransfer} kali</b></div>
+          <div className="li"><span>Stock Opname</span><b>{totalOpname} kali</b></div>
           <div className="li">
             <span>Selisih Fisik Opname</span>
             <b style={{ color: totalSelisih < 0 ? '#DC2626' : '#166534' }}>
@@ -123,19 +198,15 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* ====== BAGIAN 3: TABEL PRODUK ====== */}
+      {/* ====== TABEL PRODUK ====== */}
       <Card>
         <div className="h2">10 Produk dengan Nilai Stok Terbesar</div>
         <div className="tw">
           <table className="tbl">
             <thead>
               <tr>
-                <th>SKU</th>
-                <th>Produk</th>
-                <th>Gudang</th>
-                <th>Stok</th>
-                <th>Harga Satuan</th>
-                <th>Total Nilai</th>
+                <th>SKU</th><th>Produk</th><th>Gudang</th>
+                <th>Stok</th><th>Harga Satuan</th><th>Total Nilai</th>
               </tr>
             </thead>
             <tbody>
