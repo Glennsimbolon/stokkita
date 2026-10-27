@@ -175,7 +175,6 @@ export function AppProvider({ children }) {
     }
   };
 
-    // ---------- SO ----------
   const moveSo = async (kode) => {
     const s = so.find((x) => x.kode === kode);
     if (!s || s.kolom >= 3) return;
@@ -212,6 +211,20 @@ export function AppProvider({ children }) {
       toast(`${kode} dipindah ke ${columns[s.kolom + 1]}`);
     } catch (err) {
       toast(`Gagal pindah SO: ${err.message}`);
+    }
+  };
+
+  const createSo = async (customer, details) => {
+    const totalAmount = details.reduce((sum, d) => sum + (d.qty * d.harga_satuan), 0);
+    const newSo = { kode: `SO-${Date.now()}`, customer, amount: totalAmount, kolom: 0 };
+    try {
+      const created = await soApi.create(newSo, details);
+      setSo((prev) => [created, ...prev]);
+      toast(`SO ${created.kode} berhasil dibuat`);
+      return created;
+    } catch (err) {
+      toast(`Gagal buat SO: ${err.message}`);
+      throw err;
     }
   };
 
