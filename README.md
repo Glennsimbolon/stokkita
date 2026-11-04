@@ -6,7 +6,7 @@ Aplikasi ini dibangun menggunakan **React (Vite)** untuk frontend dan **Supabase
 
 ## 🔗 Live Demo
 Kamu bisa mencoba aplikasi secara langsung di:
-**[https://stokkita-pi.vercel.app](https://stokkita-pi.vercel.app)**
+**[https://stokkita-pi.vercel.app](https://stokkita-theta.vercel.app/)**
 
 ---
 
